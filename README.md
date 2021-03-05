@@ -119,3 +119,9 @@ In addition to configuring the BGP settings you will need to add the EBGP peer I
 (local networks image)
 
 # Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)
+Once, we have the BGP configured on the vMX, the next step would be to configure the route server to peer with the vMX. The following command can be used to establish the peering between the route server and the vMX. 
+```
+az network routeserver peering create --routeserver-name “myRouteServer” -g “RouteServerRG” --peer-ip “vmx_pip” --peer-asn “vmx1_asn” -n “vmx1_name”
+```
+- vmx_pip is going to be the private ip of your vMX instance
+- vmx_asn is the ASN that was configured for the vMX in the above step

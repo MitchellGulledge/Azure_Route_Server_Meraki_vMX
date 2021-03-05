@@ -59,4 +59,51 @@ az network routeserver create -n “myRouteServer” -g “RouteServerRG” --ho
 
 From Azure: "The location needs to match the location of your virtual network. The HostedSubnet is the RouteServerSubnet ID you obtained in the previous section."
 
+# Step 4) Configure BGP on the Cisco Meraki vMX
 
+The next step is for us to enable Auto VPN (set the vMX to be an Auto VPN Hub on the site to site VPN page) and configure the BGP settings on the Azure vMXs. 
+
+Before we can configure the BGP settings on the Meraki dashboard we need to obtain the BGP peer settings for the route server (peer IPs and ASN). To do this we run the following command using the Azure CLI:
+
+```
+az network routeserver show -g “RouteServerRG” -n “myRouteServer” 
+```
+
+The output from the above should look like:
+
+```
+{
+  "addressPrefix": null,
+  "allowBranchToBranchTraffic": true,
+  "azureFirewall": null,
+  "bgpConnections": null,
+  "etag": "W/\"xxxxxxx-xxxx-xxxx-xxxxx-xxxxxxx\"",
+  "expressRouteGateway": null,
+  "id": "/subscriptions/xxxxx-xxxxx-xxx-xxx/resourceGroups/xxxxxxxx/providers/Microsoft.Network/virtualHubs/xxxxxx",
+  "ipConfigurations": null,
+  "location": "southcentralus",
+  "name": "myRouteServer3",
+  "p2SVpnGateway": null,
+  "provisioningState": "Succeeded",
+  "resourceGroup": "RouteServerRG3",
+  "routeTable": {
+    "routes": []
+  },
+  "routingState": "Provisioned",
+  "securityPartnerProvider": null,
+  "securityProviderName": null,
+  "sku": "Standard",
+  "tags": null,
+  "type": "Microsoft.Network/virtualHubs",
+  "virtualHubRouteTableV2S": [],
+  "virtualRouterAsn": 65515,
+  "virtualRouterIps": [
+    "10.196.0.4",
+    "10.196.0.5"
+  ],
+  "virtualWan": null,
+  "vpnGateway": null
+}
+```
+
+Noting in the above you will want to grab the virtualRouterAsn and virtualRouterIps for the Meraki BGP config. 

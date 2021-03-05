@@ -16,3 +16,28 @@ In the above diagram, the branch MX connects to a pair of vMXs deployed in the s
 The steps for deploying virtual MXs from the Azure marketplace are out of scope for this document. For more information on deploying virtual MXs from the Azure marketplace please reference the following link:
 https://documentation.meraki.com/MX/MX_Installation_Guides/vMX_Setup_Guide_for_Microsoft_Azure
 
+# Step 2) Deploy Azure Route Server (CLI Reference)
+
+For additional ways to automate or configure through the Azure portal please refer to the Azure Route Server Documentation here:
+https://docs.microsoft.com/en-us/azure/route-server/overview
+
+The steps for deploying the route server via the CLI are as follows:
+
+1) Login to your Azure account:
+
+```
+az login
+```
+
+2) Ensure you are in the correct subscription in Azure
+
+```
+az account list
+```
+
+3) For the Azure Route Server, a VNET is need in order to host the service. Use the follow command to create a resource group and virtual network. (Use these if you do not already have a virtual network) Below snippets were taken directly from Azure documentation: https://docs.microsoft.com/en-us/azure/route-server/quickstart-configure-route-server-cli
+
+```
+az group create -n “RouteServerRG” -l “westus” 
+az network vnet create -g “RouteServerRG” -n “myVirtualNetwork” --address-prefix “10.0.0.0/16” 
+```

@@ -107,3 +107,15 @@ The output from the above should look like:
 ```
 
 Noting in the above you will want to grab the virtualRouterAsn and virtualRouterIps for the Meraki BGP config. 
+
+Once these values have been obtained, you will navigate to your virtual appliance in the Meraki Dashboard and navigate to the site to site vpn page, enable Auto VPN by selecting Hub and then scrolling down to the BGP settings. 
+
+Select the dropdown to enable BGP and configure your local ASN (The Meraki Auto VPN Autonomous System) and then configure two EBGP peers with the values that you were able to obtain from above. Below is a screenshot of what the BGP config should look like for both your vMXs:
+
+(BGP settings image)
+
+In addition to configuring the BGP settings you will need to add the EBGP peer IPs as local networks on the top of the site to site VPN page. This tells the vMXs that the peer IPs are always reachable through its local Network Interface (NIC) instead of over another VPN tunnel. (This is a requirement for Meraki when Multihop is in play). Below is a screenshot of the local netwoks on the Azure vMX headends:
+
+(local networks image)
+
+# Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)

@@ -2,6 +2,17 @@
 
 Authors: Simarbir Singh, Mitchell Gulledge
 
+- [Azure Route Server and Cisco Meraki vMX Deployment Guide (Preview not production ready)](#azure-route-server-and-cisco-meraki-vmx-deployment-guide-preview-not-production-ready)
+- [Solution Overview](#solution-overview)
+- [Solution Architecture](#solution-architecture)
+- [Step 1) Deploy Cisco Meraki Network Virtual Appliances (vMXs) from Azure Marketplace](#step-1-deploy-cisco-meraki-network-virtual-appliances-vmxs-from-azure-marketplace)
+- [Step 2) Prep Azure  Route Server Environment (CLI Reference)](#step-2-prep-azure--route-server-environment-cli-reference)
+- [Step 3) Deploy Azure Route Server (CLI Reference)](#step-3-deploy-azure-route-server-cli-reference)
+- [Step 4) Configure BGP on the Cisco Meraki vMX](#step-4-configure-bgp-on-the-cisco-meraki-vmx)
+- [Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)](#step-5-configure-bgp-peering-on-the-azure-route-server-cli-reference)
+- [Troubleshooting](#troubleshooting)
+- [Automation](#automation)
+
 # Solution Overview
 
 This document encompasses a detailed step by step guide on deploying the Azure Route Server (Currently in Preview) and Cisco Meraki vMXs hosted in the Azure cloud. BGP is utilized to provide resiliency, symmetry and load sharing across vMXs in the Azure cloud.
@@ -125,3 +136,9 @@ az network routeserver peering create --routeserver-name “myRouteServer” -g 
 ```
 - vmx_pip is going to be the private ip of your vMX instance
 - vmx_asn is the ASN that was configured for the vMX in the above step
+
+# Troubleshooting
+
+# Automation
+
+

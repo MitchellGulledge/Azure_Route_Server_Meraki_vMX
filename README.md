@@ -130,6 +130,7 @@ In addition to configuring the BGP settings you will need to add the EBGP peer I
 ![Test Image 1](local_networks.png)
 
 # Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)
+
 Once, we have the BGP configured on the vMX, the next step would be to configure the route server to peer with the vMX. The following command can be used to establish the peering between the route server and the vMX. 
 ```
 az network routeserver peering create --routeserver-name “myRouteServer” -g “RouteServerRG” --peer-ip “vmx_pip” --peer-asn “vmx1_asn” -n “vmx1_name”
@@ -138,6 +139,12 @@ az network routeserver peering create --routeserver-name “myRouteServer” -g 
 - vmx_asn is the ASN that was configured for the vMX in the above step
 
 # Troubleshooting
+
+When BGP peering between the Cisco Meraki NVA and the route server is flapping, it is typically due to the hold timer settings on the Meraki dashboard. By default, the Keep-alive timer on Azure Route Server is set to 60 seconds and the Hold-down timer is 180 seconds. (as seen in referenced BGP config)
+
+The session between the NVA and the Azure route server must be an EBGP session. This is due to the fact that the Meraki branches and the vMX in Azure have an IBGP relationship. So in order for the branch to receive the Azure subnets the vMX must be configured in a different ASN than the Azure route server. 
+
+The Cisco Meraki Events Log is a powerful tool for troubleshooting any BGP issues.
 
 # Automation
 

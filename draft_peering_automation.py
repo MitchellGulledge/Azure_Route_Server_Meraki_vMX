@@ -94,7 +94,9 @@ for networks in network_ids:
         'network_name': networks[0],
         'network_id': networks[1],
         'uplink_ip': vmx_lan_ip[0],
-        'network_tags': networks[2], # will fix later, debating if needed
+        # using list comprehension to pick out the specific tag within the list of tags that matches
+        # the configured route server in Azure, with networks[2] being the list of tags
+        'network_tags': [x for x in networks[2] if tag_prefix in x], 
         'bgp_enabled': network_bgp_info['enabled'], # this will have to be a check or something we get rid of
         'bgp_asn': network_bgp_info['asNumber'],
         'bgp_neighbors': network_bgp_info['neighbors']

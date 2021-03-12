@@ -36,6 +36,33 @@ def get_tagged_networks():
 
     return organization_networks_response
 
+# creating function to obtain BGP config for tagged networks along with uplink information
+def get_tagged_networks_bgp_data(network_id):
+
+    # executing API call to obtain BGP configuration for specified network ID
+    network_bgp_config = meraki_dashboard_sdk_auth.appliance.getNetworkApplianceVpnBgp(
+        network_id
+    )
+
+    return network_bgp_config
+
+
+
+# creating function to obtain the device status for all devices in the org, this will allow us to
+# obtain the lan IP (Azures private IP) so we can later create peerings on the route server
+def get_org_meraki_device_status():
+
+    # using SDK to fetch the device status for every Meraki box in org
+    device_status_response = meraki_dashboard_sdk_auth.organizations.getOrganizationDevicesStatuses(
+        org_id, total_pages='all'
+    )
+
+    return device_status_response
+
+
+# executing function to obtain the device statuses so we can later obtain the inside IP of the vMXs
+meraki_device_status = get_org_meraki_device_status()
+
 # creating variable that is a list of all meraki networks inside the org
 org_networks = get_tagged_networks()
 
@@ -43,4 +70,39 @@ org_networks = get_tagged_networks()
 # tags key in the list of dictionaries
 tagged_networks = [x for x in org_networks if str(tag_prefix) in str(x['tags'])[1:-1]]
 
-print(tagged_networks)
+# creating list that will be list of dictionaries containing all the Meraki BGP information
+# including the Uplink IP, Local ASN and current configured BGP peers
+list_of_meraki_vmx_bgp_config = []
+
+# using list comprehension to fetch the network IDs from the list of networks in the tagged_networks
+# variable with all the Azure vMXs that were tagged
+network_ids = [[x['name'], x['id'], x['tags']] for x in tagged_networks]
+
+# iterating through list of network_ids and obtaining the BGP config for each vMX
+for networks in network_ids:
+
+    # executing function to fetch BGP config for given network ID, the network ID is going to be
+    # indexed as networks[1] since the data is packed in a list ordered as name, id
+    network_bgp_info = get_tagged_networks_bgp_data(networks[1])
+
+    # now that we have the network ID and BGP information we need to obtain the inside IP of the vMX
+    vmx_lan_ip = [x['lanIp'] for x in meraki_device_status if x['networkId'] == networks[1]]
+    
+    # creating master dictionary with relevant information to append to list_of_meraki_vmx_bgp_config
+    # so that the Azure config can be updated with the appropriate BGP configuration
+    vmx_bgp_dict_info = {
+        'network_name': networks[0],
+        'network_id': networks[1],
+        'uplink_ip': vmx_lan_ip[0],
+        'network_tags': networks[2], # will fix later, debating if needed
+        'bgp_enabled': network_bgp_info['enabled'], # this will have to be a check or something we get rid of
+        'bgp_asn': network_bgp_info['asNumber'],
+        'bgp_neighbors': network_bgp_info['neighbors']
+    }
+
+    # appending the vmx_bgp_dict_info dictionary to the list list_of_meraki_vmx_bgp_config to 
+    # make a list of dictionaries to be referenced when updating the Azure config
+    list_of_meraki_vmx_bgp_config.append(vmx_bgp_dict_info)
+
+
+print(list_of_meraki_vmx_bgp_config)

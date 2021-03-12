@@ -12,6 +12,7 @@ Authors: Simarbir Singh, Mitchell Gulledge
 - [Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)](#step-5-configure-bgp-peering-on-the-azure-route-server-cli-reference)
 - [Troubleshooting](#troubleshooting)
 - [Automation](#automation)
+- [References](#References)
 
 # Solution Overview
 
@@ -148,4 +149,10 @@ The Cisco Meraki Events Log is a powerful tool for troubleshooting any BGP issue
 
 # Automation
 
+# References
 
+Below link on deploying Meraki BGP:
+https://documentation.meraki.com/MX/Networks_and_Routing/BGP
+
+Link on the Azure Route Server:
+https://docs.microsoft.com/en-us/azure/route-server/overview

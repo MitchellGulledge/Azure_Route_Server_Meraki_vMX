@@ -3,17 +3,8 @@ import json
 import time
 import meraki
 
-# Defining your API key as a variable in source code is not recommended
-API_KEY = ''
-# Instead, use an environment variable as shown under the Usage section
-# @ https://github.com/meraki/dashboard-api-python/
-
-# creating variable for org name to later map the org ID
-org_name = ''
-
-# creating tag prefix variable in order for the meraki dashboard to indicate to the Azure Function 
-# that is needs to establish a peering session between the NVA and the route server
-tag_prefix = 'ARS-'
+from pprint import pprint as pp
+from configs import *
 
 # creating authentication variable for the Meraki SDK
 meraki_dashboard_sdk_auth = meraki.DashboardAPI(API_KEY)
@@ -107,4 +98,49 @@ for networks in network_ids:
     list_of_meraki_vmx_bgp_config.append(vmx_bgp_dict_info)
 
 
-print(list_of_meraki_vmx_bgp_config)
+def get_microsoft_network_base_url(mgmt_url, sub_id, rg_name=None, provider="Microsoft.Network"):
+    if rg_name:
+        return "{0}/subscriptions/{1}/resourceGroups/{2}/providers/{3}".format(mgmt_url, sub_id, rg_name, provider)
+
+    return "{0}/subscriptions/{1}/providers/{2}".format(mgmt_url, sub_id, provider)
+
+# function to obtain the route server information, we would need the routeserver asn and IP to peer with the vMXs. 
+def get_route_server(resource_group, route_server_name, header_with_bearer_token):
+    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
+                                                   SUBSCRIPTION_ID, RESOURCE_GROUP) + f"/virtualHubs/{route_server_name}?api-version=2020-07-01"
+    route_server_list = requests.get(endpoint_url, headers=header_with_bearer_token)
+    route_server_info = route_server_list.json()
+    routeserver_bgp_dict_info = {
+        'routeserver_asn': route_server_info['properties']['virtualRouterAsn'],
+        'routeserver_ips': route_server_info['properties']['virtualRouterIps']
+    }
+    pp(routeserver_bgp_dict_info)
+
+    return routeserver_bgp_dict_info
+
+def get_route_server_bgp_connections(resource_group, route_server_name, header_with_bearer_token):
+    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
+                                                   SUBSCRIPTION_ID, RESOURCE_GROUP) + f"/virtualHubs/{route_server_name}/bgpConnections?api-version=2020-07-01"
+    route_server_bgp_connections_list = requests.get(endpoint_url, headers=header_with_bearer_token)
+    route_server_bgp_connections_info = route_server_bgp_connections_list.json()
+    pp(route_server_bgp_connections_info)
+
+    return route_server_bgp_connections_info
+
+# function to update the routeserver bgp config
+def update_route_server_bgp_connections(resource_group, route_server_name, connection_name, \
+                        peer_ip, peer_asn, header_with_bearer_token):
+    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
+                                                  SUBSCRIPTION_ID, RESOURCE_GROUP) + \
+                                                  f"/virtualHubs/{route_server_name}/bgpConnections/{connection_name}?api-version=2020-07-01"
+
+    peer_config = {
+            "properties": {
+                "peerIp": peer_ip,
+                 "peerAsn": peer_asn
+            }
+        }
+
+    route_server_bgp_update = requests.put(endpoint_url, headers=header_with_bearer_token, json=peer_config)
+
+    return route_server_bgp_update

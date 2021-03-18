@@ -6,6 +6,7 @@ import meraki
 from pprint import pprint as pp
 
 # Azure authentication credentials are listed below
+# Azure authentication credentials are listed below
 AZURE_MGMT_URL = "https://management.azure.com"
 BLOB_HOST_URL = "blob.core.windows.net"
 SUBSCRIPTION_ID = ""
@@ -16,12 +17,12 @@ AZURE_TOKEN = {"Authorization": "Bearer ..----"}
 
 # Defining your API key as a variable in source code is not recommended
 API_KEY = ''
-# Instead, use an environment variable as shown under the Usage section
-# @ https://github.com/meraki/dashboard-api-python/
-# creating variable for org name to later map the org ID
+## Instead, use an environment variable as shown under the Usage section
+## @ https://github.com/meraki/dashboard-api-python/
+## creating variable for org name to later map the org ID
 org_name = ''
-# creating tag prefix variable in order for the meraki dashboard to indicate to the Azure Function 
-# that is needs to establish a peering session between the NVA and the route server
+## creating tag prefix variable in order for the meraki dashboard to indicate to the Azure Function 
+## that is needs to establish a peering session between the NVA and the route server
 tag_prefix = 'ARS-'
 
 # creating authentication variable for the Meraki SDK
@@ -34,8 +35,55 @@ for org in result_org_id:
         org_id = org['id']
 
 
+def get_microsoft_network_base_url(AZURE_MGMT_URL, SUBSCRIPTION_ID, rg_name=None, provider="Microsoft.Network"):
+    if rg_name:
+        return "{0}/subscriptions/{1}/resourceGroups/{2}/providers/{3}".format(AZURE_MGMT_URL, SUBSCRIPTION_ID, rg_name, provider)
+
+    return "{0}/subscriptions/{1}/providers/{2}".format(AZURE_MGMT_URL, SUBSCRIPTION_ID, provider)
+
+# function to obtain the route server information, we would need the routeserver asn and IP to peer with the vMXs. 
+def get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN):
+    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
+                                                   SUBSCRIPTION_ID, RESOURCE_GROUP) + f"/virtualHubs/{ROUTE_SERVER_NAME}?api-version=2020-07-01"
+    route_server_list = requests.get(endpoint_url, headers=AZURE_TOKEN)
+    route_server_info = route_server_list.json()
+    #print(route_server_info)
+    routeserver_bgp_dict_info = {
+        'routeserver_asn': route_server_info['properties']['virtualRouterAsn'],
+        'routeserver_ips': route_server_info['properties']['virtualRouterIps']
+    }
+    #pp(routeserver_bgp_dict_info)
+
+    return routeserver_bgp_dict_info
+
+def get_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN):
+    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
+                                                   SUBSCRIPTION_ID, RESOURCE_GROUP) + f"/virtualHubs/{ROUTE_SERVER_NAME}/bgpConnections?api-version=2020-07-01"
+    route_server_bgp_connections_list = requests.get(endpoint_url, headers=AZURE_TOKEN)
+    route_server_bgp_connections_info = route_server_bgp_connections_list.json()
+
+    return route_server_bgp_connections_info
+
+# function to update the routeserver bgp config
+def update_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, connection_name, \
+                        peer_ip, peer_asn, AZURE_TOKEN):
+    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
+                                                  SUBSCRIPTION_ID, RESOURCE_GROUP) + \
+                                                  f"/virtualHubs/{ROUTE_SERVER_NAME}/bgpConnections/{connection_name}?api-version=2020-07-01"
+
+    peer_config = {
+            "properties": {
+                "peerIp": peer_ip,
+                 "peerAsn": peer_asn
+            }
+        }
+
+    route_server_bgp_update = requests.put(endpoint_url, headers=AZURE_TOKEN, json=peer_config)
+
+    return route_server_bgp_update
 # When the function kicks off, the first thing we will do is grab all tagged networks 
 # in Meraki dashboard via the sdk, below is the function to return all tagged networks
+
 def get_tagged_networks():
     
     # executing API call to obtain all Meraki networks in the organization
@@ -45,17 +93,42 @@ def get_tagged_networks():
 
     return organization_networks_response
 
+
 # creating function to obtain BGP config for tagged networks along with uplink information
 def get_tagged_networks_bgp_data(network_id):
-
+    route_server_config = get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN)
+    route_server_ips_to_add = []
+    
     # executing API call to obtain BGP configuration for specified network ID
     network_bgp_config = meraki_dashboard_sdk_auth.appliance.getNetworkApplianceVpnBgp(
         network_id
     )
+    # conditional statement to ensure BGP is enabled for the tagged network, if not we will
+    # update the BGP config for the network ID that we already put to function and return the config
+    if network_bgp_config['enabled'] == False:
+        enabled = True
+        # enabling BGP config for network
+        enable_bgp_response = meraki_dashboard_sdk_auth.appliance.updateNetworkApplianceVpnBgp(
+            network_id, enabled, 
+            ibgpHoldTimer=180
+        )
+        for ips in route_server_config['routeserver_ips']:
+            route_server_ips_to_add.append(ips)
+        # executing API call to obtain BGP configuration for specified network ID
+        #for neighbors in network_bgp_config['neighbors']['ip']:
+        #    if neighbors['ip'] != ips:
 
+        update_bgp_config = meraki_dashboard_sdk_auth.appliance.updateNetworkApplianceVpnBgp(
+                network_id, enabled, 
+                ibgpHoldTimer=180,
+                neighbors=[{'ip': route_server_ips_to_add[0], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}, \
+                    {'ip': route_server_ips_to_add[1], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}]
+            )
+
+    network_bgp_config = meraki_dashboard_sdk_auth.appliance.getNetworkApplianceVpnBgp(
+        network_id
+    )
     return network_bgp_config
-
-
 
 # creating function to obtain the device status for all devices in the org, this will allow us to
 # obtain the lan IP (Azures private IP) so we can later create peerings on the route server
@@ -78,6 +151,7 @@ org_networks = get_tagged_networks()
 # using list comprehension to obtain all networks containing the tag_prefix variable under the 
 # tags key in the list of dictionaries
 tagged_networks = [x for x in org_networks if str(tag_prefix) in str(x['tags'])[1:-1]]
+print("Tagged Networks {0}".format(tagged_networks))
 
 # creating list that will be list of dictionaries containing all the Meraki BGP information
 # including the Uplink IP, Local ASN and current configured BGP peers
@@ -93,7 +167,6 @@ for networks in network_ids:
     # executing function to fetch BGP config for given network ID, the network ID is going to be
     # indexed as networks[1] since the data is packed in a list ordered as name, id
     network_bgp_info = get_tagged_networks_bgp_data(networks[1])
-
     # now that we have the network ID and BGP information we need to obtain the inside IP of the vMX
     vmx_lan_ip = [x['lanIp'] for x in meraki_device_status if x['networkId'] == networks[1]]
     
@@ -116,90 +189,26 @@ for networks in network_ids:
     list_of_meraki_vmx_bgp_config.append(vmx_bgp_dict_info)
 
 
-#pp(list_of_meraki_vmx_bgp_config)
-
-def get_microsoft_network_base_url(AZURE_MGMT_URL, SUBSCRIPTION_ID, rg_name=None, provider="Microsoft.Network"):
-    if rg_name:
-        return "{0}/subscriptions/{1}/resourceGroups/{2}/providers/{3}".format(AZURE_MGMT_URL, SUBSCRIPTION_ID, rg_name, provider)
-
-    return "{0}/subscriptions/{1}/providers/{2}".format(AZURE_MGMT_URL, SUBSCRIPTION_ID, provider)
-
-# function to obtain the route server information, we would need the routeserver asn and IP to peer with the vMXs. 
-def get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN):
-    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
-                                                   SUBSCRIPTION_ID, RESOURCE_GROUP) + f"/virtualHubs/{ROUTE_SERVER_NAME}?api-version=2020-07-01"
-    route_server_list = requests.get(endpoint_url, headers=AZURE_TOKEN)
-    route_server_info = route_server_list.json()
-    print(route_server_info)
-    routeserver_bgp_dict_info = {
-        'routeserver_asn': route_server_info['properties']['virtualRouterAsn'],
-        'routeserver_ips': route_server_info['properties']['virtualRouterIps']
-    }
-    pp(routeserver_bgp_dict_info)
-
-    return routeserver_bgp_dict_info
-
-def get_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN):
-    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
-                                                   SUBSCRIPTION_ID, RESOURCE_GROUP) + f"/virtualHubs/{ROUTE_SERVER_NAME}/bgpConnections?api-version=2020-07-01"
-    route_server_bgp_connections_list = requests.get(endpoint_url, headers=AZURE_TOKEN)
-    route_server_bgp_connections_info = route_server_bgp_connections_list.json()
-    pp(route_server_bgp_connections_info)
-
-    return route_server_bgp_connections_info
-
-# function to update the routeserver bgp config
-def update_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, connection_name, \
-                        peer_ip, peer_asn, AZURE_TOKEN):
-    endpoint_url = get_microsoft_network_base_url(AZURE_MGMT_URL,
-                                                  SUBSCRIPTION_ID, RESOURCE_GROUP) + \
-                                                  f"/virtualHubs/{ROUTE_SERVER_NAME}/bgpConnections/{connection_name}?api-version=2020-07-01"
-
-    peer_config = {
-            "properties": {
-                "peerIp": peer_ip,
-                 "peerAsn": peer_asn
-            }
-        }
-
-    route_server_bgp_update = requests.put(endpoint_url, headers=AZURE_TOKEN, json=peer_config)
-
-    return route_server_bgp_update
-
-#pp(get_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN))
-
 azure_route_server_bgp_connection_info = get_route_server_bgp_connections(RESOURCE_GROUP, \
     ROUTE_SERVER_NAME, AZURE_TOKEN)
 
-# now we need to compare the two dictionaries for Azure and Meraki 
-# (list_of_meraki_vmx_bgp_config and azure_route_server_bgp_connection_info['value'])
-
-#print(azure_route_server_bgp_connection_info['value'])
-
-pp(get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN))
-
+# now we need to compare the two dictionaries for Azure and Meraki (list_of_meraki_vmx_bgp_config and azure_route_server_bgp_connection_info['value'])
 azure_route_server_local_bgp_config = get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN)
-
-# iterating through meraki bgp config
+#iterating through meraki bgp config
 for meraki_peers in list_of_meraki_vmx_bgp_config:
-
-    # iterating through azure_route_server_bgp_connection_info['value']
-    for azure_peers in azure_route_server_bgp_connection_info['value']:
-
-        #pp(list_of_meraki_vmx_bgp_config)
-
+    # iterate over azure bgp connections
+    for azure_peers in azure_route_server_bgp_connection_info['value']: 
+        # Check if meraki uplink matches the azure routeserver peer ip, peer_asn and provisioning state
         if meraki_peers['uplink_ip'] == azure_peers['properties']['peerIp'] and \
             meraki_peers['bgp_asn'] == azure_peers['properties']['peerAsn'] and \
                 azure_peers['properties']['provisioningState'] == 'Succeeded':
-
-
+                    # iterate over the meraki dict for bgp peers
                     for peers in meraki_peers['bgp_neighbors']:
-
-
+                        # Match if meraki peer_asn, peer_ip matches the routeserver local asn and ip
                         if int(peers['peer_asn']) == int(azure_route_server_local_bgp_config['routeserver_asn']) and \
                             str(peers['peer_ip']) in azure_route_server_local_bgp_config['routeserver_ips']:
-
-                                print("match")
-
-                    
-
+                                print("Network:{0} configured correctly and no new connections to configure".format([meraki_peers['network_name']]))
+                        else:
+                            # if not update the routeserver config for the meraki peer 
+                            update_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, peers['network_name'], peers['uplink_ip'], peers['bgp_asn'], AZURE_TOKEN)
+                            print("Updated route_server config for peer {0}".format(peers['network_name']))

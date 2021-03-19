@@ -87,30 +87,23 @@
         },
         "tag_prefix": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "ARS-",
             "metadata": {
                 "description": "Beginning of Meraki Dashboard network tag"
             }
         },
-        "umbrella_org_id": {
+        "ROUTE_SERVER_NAME": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Beginning of Meraki Dashboard network tag"
+                "description": "Name of the route server resource Meraki should target"
             }
         },
-        "umbrella_secret": {
+        "RESOURCE_GROUP": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Beginning of Meraki Dashboard network tag"
-            }
-        },
-        "umbrella_key": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "umbrella API key"
+                "description": "Name of the Resource Group that the Route Server is hosted in"
             }
         }
     },
@@ -166,24 +159,20 @@
                             "value": "[parameters('meraki_org_name')]"
                         },
                         {
-                            "name": "subscription_id",
-                            "value": "[subscription().subscriptionId]"
+                            "name": "SUBSCRIPTION_ID",
+                            "value": "[subscription().SUBSCRIPTION_ID]"
                         },
                         {
                             "name": "tag_prefix",
                             "value": "[parameters('tag_prefix')]"
                         },
                         {
-                            "name": "umbrella_org_id",
-                            "value": "[parameters('umbrella_org_id')]"
+                            "name": "ROUTE_SERVER_NAME",
+                            "value": "[parameters('ROUTE_SERVER_NAME')]"
                         },
                         {
-                            "name": "umbrella_key",
-                            "value": "[parameters('umbrella_key')]"
-                        },
-                        {
-                            "name": "umbrella_secret",
-                            "value": "[parameters('umbrella_secret')]"
+                            "name": "RESOURCE_GROUP",
+                            "value": "[parameters('RESOURCE_GROUP')]"
                         }
                     ],
                     "LinuxFxVersion": "PYTHON|3.8"

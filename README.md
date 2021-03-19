@@ -190,7 +190,8 @@ For automation, Azure Functions are used to run a Python script every 5 minutes 
 
 - To deploy the Azure Function, click on the deploy to Azure button below:
 
-(list azure button here)
+
+[![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMitchellGulledge%2FAzure_Route_Server_Meraki_vMX%2Fmain%2Fazuredeploy.json)
 
 Next, click the Deploy to Azure button. 
 
@@ -266,5 +267,3 @@ https://documentation.meraki.com/MX/Networks_and_Routing/BGP
 
 Link on the Azure Route Server:
 https://docs.microsoft.com/en-us/azure/route-server/overview
-
-[![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMitchellGulledge%2FUmbrakiServerless%2Fmain%2Fazuredeploy.json)

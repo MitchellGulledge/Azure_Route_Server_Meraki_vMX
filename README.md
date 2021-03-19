@@ -12,7 +12,7 @@ Authors: Simarbir Singh, Mitchell Gulledge
 - [Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)](#step-5-configure-bgp-peering-on-the-azure-route-server-cli-reference)
 - [Troubleshooting](#troubleshooting)
 - [Automation](#automation)
-- [References](#References)
+- [References](#references)
 
 # Solution Overview
 
@@ -157,6 +157,8 @@ https://developer.cisco.com/meraki/api-v1/#!get-network-events
 
 # Automation
 
+Nobody likes manually entering remote peer IP and ASN information, whether it is via CLI or GUI. Hence we offer automation option powered by an Azure Function. Below are the steps needed in order to utilize the Meraki BGP Peering automation toolkit. 
+`
 # References
 
 Below link on deploying Meraki BGP:

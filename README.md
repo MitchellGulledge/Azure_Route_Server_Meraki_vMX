@@ -147,7 +147,7 @@ The session between the NVA and the Azure route server must be an EBGP session. 
 
 The Cisco Meraki Events Log is a powerful tool for troubleshooting any BGP issues. For flapping BGP sessions the Meraki event log will display when BGP sessions establish and log the BGP Notification messages that were sent and received. This is useful for troubleshooting flapping routes/sessions. Below is a screenshot that shows some sample BGP logs in the Meraki Dashboard:
 
-insert Meraki BGP Logs
+![Test Image 1](BGP_Event_log.png)
 
 The Notification messages displayed above show the RFC error and sub error codes for why a session was brought down. Below is a link to the RFC:
 https://tools.ietf.org/html/rfc4486

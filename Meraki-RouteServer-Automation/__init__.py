@@ -5,7 +5,7 @@ import meraki
 import logging
 import os
 
-from pprint import pprint as pp
+#from pprint import pprint as pp
 
 # Azure authentication credentials are listed below
 AZURE_MGMT_URL = "https://management.azure.com"
@@ -183,17 +183,17 @@ def get_tagged_networks_bgp_data(network_id):
 
         for neighbor_ip in get_network_meraki_vpn_config['subnets']:
 
-            print(str(network)[0:-3])
+            logging.info(str(network)[0:-3])
 
-            print(str(neighbor_ip['localSubnet'])[0:-3])
+            logging.info(str(neighbor_ip['localSubnet'])[0:-3])
 
             if str(network)[0:-3] in str(neighbor_ip['localSubnet'])[0:-3]:
 
-                print("local network configured for BGP neighbor")
+                logging.info("local network configured for BGP neighbor")
 
             else:
 
-                print(f"local network not detected in vpn config, adding: {network}")
+                logging.info(f"local network not detected in vpn config, adding: {network}")
 
                 # appending the network to the list local_subnets_to_add to later update VPN config
                 local_subnets_to_add.append(network)
@@ -213,7 +213,7 @@ def get_tagged_networks_bgp_data(network_id):
         )
 
         # logging the status of updating the site to site vpn config for the network
-        print(update_local_networks_response)
+        logging.info(update_local_networks_response)
 
 
 
@@ -243,7 +243,7 @@ org_networks = get_tagged_networks()
 # using list comprehension to obtain all networks containing the tag_prefix variable under the 
 # tags key in the list of dictionaries
 tagged_networks = [x for x in org_networks if str(tag_prefix) in str(x['tags'])[1:-1]]
-print("Tagged Networks {0}".format(tagged_networks))
+logging.info("Tagged Networks {0}".format(tagged_networks))
 
 # creating list that will be list of dictionaries containing all the Meraki BGP information
 # including the Uplink IP, Local ASN and current configured BGP peers
@@ -301,7 +301,7 @@ for meraki_peers in list_of_meraki_vmx_bgp_config:
     # iterate over azure bgp connections
     for azure_peers in azure_route_server_bgp_connection_info['value']: 
 
-        print(meraki_peers)
+        logging.info(meraki_peers)
         
 
         # Check if meraki uplink matches the azure routeserver peer ip, peer_asn and provisioning state
@@ -315,7 +315,7 @@ for meraki_peers in list_of_meraki_vmx_bgp_config:
                         # Match if meraki peer_asn, peer_ip matches the routeserver local asn and ip
                         if int(peers['peer_asn']) == int(azure_route_server_local_bgp_config['routeserver_asn']) and \
                             str(peers['peer_ip']) in azure_route_server_local_bgp_config['routeserver_ips']:
-                                print("Network:{0} configured correctly and no new connections to configure".format([meraki_peers['network_name']]))
+                                logging.info("Network:{0} configured correctly and no new connections to configure".format([meraki_peers['network_name']]))
                                 
         # might have to un indent this one more time could be causing double puts to azure
         else:
@@ -323,4 +323,4 @@ for meraki_peers in list_of_meraki_vmx_bgp_config:
 
             # if not update the routeserver config for the meraki peer 
             update_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, meraki_peers['network_name'], meraki_peers['uplink_ip'], meraki_peers['bgp_asn'], AZURE_TOKEN)
-            print("Updated route_server config for peer {0}".format(meraki_peers['network_name']))
+            logging.info("Updated route_server config for peer {0}".format(meraki_peers['network_name']))

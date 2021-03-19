@@ -145,7 +145,15 @@ When BGP peering between the Cisco Meraki NVA and the route server is flapping, 
 
 The session between the NVA and the Azure route server must be an EBGP session. This is due to the fact that the Meraki branches and the vMX in Azure have an IBGP relationship. So in order for the branch to receive the Azure subnets the vMX must be configured in a different ASN than the Azure route server. 
 
-The Cisco Meraki Events Log is a powerful tool for troubleshooting any BGP issues.
+The Cisco Meraki Events Log is a powerful tool for troubleshooting any BGP issues. For flapping BGP sessions the Meraki event log will display when BGP sessions establish and log the BGP Notification messages that were sent and received. This is useful for troubleshooting flapping routes/sessions. Below is a screenshot that shows some sample BGP logs in the Meraki Dashboard:
+
+insert Meraki BGP Logs
+
+The Notification messages displayed above show the RFC error and sub error codes for why a session was brought down. Below is a link to the RFC:
+https://tools.ietf.org/html/rfc4486
+
+Additionally, these BGP logs can be pulled from the Meraki API for integrating with third party monitoring systems:
+https://developer.cisco.com/meraki/api-v1/#!get-network-events
 
 # Automation
 

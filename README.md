@@ -179,8 +179,7 @@ Step 1) Obtain Cisco Meraki API Key and Org Name
 
 Note: The API key is associated with a Dashboard administrator account.   
 
-inser image
-
+![Test Image 1](generate_meraki_api_key.png)
 
 Run the deployment script to create the Azure Function app: 
 

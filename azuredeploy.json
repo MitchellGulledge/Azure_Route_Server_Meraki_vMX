@@ -160,7 +160,7 @@
                         },
                         {
                             "name": "SUBSCRIPTION_ID",
-                            "value": "[subscription().SUBSCRIPTION_ID]"
+                            "value": "[subscription().subscriptionId]"
                         },
                         {
                             "name": "tag_prefix",

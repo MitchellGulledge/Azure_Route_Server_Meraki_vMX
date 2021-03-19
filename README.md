@@ -231,7 +231,7 @@ Once the template has finished deploying, the Azure Function will not have any a
 
 Initially, there will be no tagged Meraki networks so the script will sleep and perform the same GET to obtain any networks with the relevant tag. In order to deploy a new branch, the user would navigate to Organization > Overview and select the checkbox next to the network that you wish to connect. Below is a snippet of the Meraki Dashboard Overview page:  
 
-(insert screenshot of org overview page)
+![Test Image 1](Org_meraki_overview.png)
 
 Once the network is tagged appropriately, BGP peering is then automatically configured between ARS and the vMX. 
 

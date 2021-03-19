@@ -4,6 +4,8 @@ import time
 import meraki
 import logging
 import os
+import azure.functions as func
+
 
 #from pprint import pprint as pp
 
@@ -234,93 +236,94 @@ def get_org_meraki_device_status():
     return device_status_response
 
 
-# executing function to obtain the device statuses so we can later obtain the inside IP of the vMXs
-meraki_device_status = get_org_meraki_device_status()
+def main(MerakiTimer: func.TimerRequest) -> None:
+    # executing function to obtain the device statuses so we can later obtain the inside IP of the vMXs
+    meraki_device_status = get_org_meraki_device_status()
 
-# creating variable that is a list of all meraki networks inside the org
-org_networks = get_tagged_networks()
+    # creating variable that is a list of all meraki networks inside the org
+    org_networks = get_tagged_networks()
 
-# using list comprehension to obtain all networks containing the tag_prefix variable under the 
-# tags key in the list of dictionaries
-tagged_networks = [x for x in org_networks if str(tag_prefix) in str(x['tags'])[1:-1]]
-logging.info("Tagged Networks {0}".format(tagged_networks))
+    # using list comprehension to obtain all networks containing the tag_prefix variable under the 
+    # tags key in the list of dictionaries
+    tagged_networks = [x for x in org_networks if str(tag_prefix) in str(x['tags'])[1:-1]]
+    logging.info("Tagged Networks {0}".format(tagged_networks))
 
-# creating list that will be list of dictionaries containing all the Meraki BGP information
-# including the Uplink IP, Local ASN and current configured BGP peers
-list_of_meraki_vmx_bgp_config = []
+    # creating list that will be list of dictionaries containing all the Meraki BGP information
+    # including the Uplink IP, Local ASN and current configured BGP peers
+    list_of_meraki_vmx_bgp_config = []
 
-# using list comprehension to fetch the network IDs from the list of networks in the tagged_networks
-# variable with all the Azure vMXs that were tagged
-network_ids = [[x['name'], x['id'], x['tags']] for x in tagged_networks]
+    # using list comprehension to fetch the network IDs from the list of networks in the tagged_networks
+    # variable with all the Azure vMXs that were tagged
+    network_ids = [[x['name'], x['id'], x['tags']] for x in tagged_networks]
 
-# iterating through list of network_ids and obtaining the BGP config for each vMX
-for networks in network_ids:
+    # iterating through list of network_ids and obtaining the BGP config for each vMX
+    for networks in network_ids:
 
-    # executing function to fetch BGP config for given network ID, the network ID is going to be
-    # indexed as networks[1] since the data is packed in a list ordered as name, id
-    network_bgp_info = get_tagged_networks_bgp_data(networks[1])
-    # now that we have the network ID and BGP information we need to obtain the inside IP of the vMX
-    vmx_lan_ip = [x['lanIp'] for x in meraki_device_status if x['networkId'] == networks[1]]
+        # executing function to fetch BGP config for given network ID, the network ID is going to be
+        # indexed as networks[1] since the data is packed in a list ordered as name, id
+        network_bgp_info = get_tagged_networks_bgp_data(networks[1])
+        # now that we have the network ID and BGP information we need to obtain the inside IP of the vMX
+        vmx_lan_ip = [x['lanIp'] for x in meraki_device_status if x['networkId'] == networks[1]]
 
-    if 'neighbors' in network_bgp_info:
+        if 'neighbors' in network_bgp_info:
 
-        bgp_neighbors = [{'peer_ip' : x['ip'], 'peer_asn' : x['remoteAsNumber']} for x in network_bgp_info['neighbors']]
+            bgp_neighbors = [{'peer_ip' : x['ip'], 'peer_asn' : x['remoteAsNumber']} for x in network_bgp_info['neighbors']]
 
-    else:
-
-        bgp_neighbors = []
-    
-    # creating master dictionary with relevant information to append to list_of_meraki_vmx_bgp_config
-    # so that the Azure config can be updated with the appropriate BGP configuration
-    vmx_bgp_dict_info = {
-        'network_name': networks[0],
-        'network_id': networks[1],
-        'uplink_ip': vmx_lan_ip[0],
-        # using list comprehension to pick out the specific tag within the list of tags that matches
-        # the configured route server in Azure, with networks[2] being the list of tags
-        'network_tags': [x for x in networks[2] if tag_prefix in x], 
-        'bgp_enabled': network_bgp_info['enabled'], # this will have to be a check or something we get rid of
-        'bgp_asn': network_bgp_info['asNumber'],
-        'bgp_neighbors': bgp_neighbors
-    }
-
-    # appending the vmx_bgp_dict_info dictionary to the list list_of_meraki_vmx_bgp_config to 
-    # make a list of dictionaries to be referenced when updating the Azure config
-    list_of_meraki_vmx_bgp_config.append(vmx_bgp_dict_info)
-
-
-azure_route_server_bgp_connection_info = get_route_server_bgp_connections(RESOURCE_GROUP, \
-    ROUTE_SERVER_NAME, AZURE_TOKEN)
-
-# now we need to compare the two dictionaries for Azure and Meraki (list_of_meraki_vmx_bgp_config and azure_route_server_bgp_connection_info['value'])
-azure_route_server_local_bgp_config = get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN)
-
-#iterating through meraki bgp config
-for meraki_peers in list_of_meraki_vmx_bgp_config:
-
-    # iterate over azure bgp connections
-    for azure_peers in azure_route_server_bgp_connection_info['value']: 
-
-        logging.info(meraki_peers)
-        
-
-        # Check if meraki uplink matches the azure routeserver peer ip, peer_asn and provisioning state
-        if meraki_peers['uplink_ip'] == azure_peers['properties']['peerIp'] and \
-            meraki_peers['bgp_asn'] == azure_peers['properties']['peerAsn'] and \
-                azure_peers['properties']['provisioningState'] == 'Succeeded':
-
-                    # iterate over the meraki dict for bgp peers
-                    for peers in meraki_peers['bgp_neighbors']:
-
-                        # Match if meraki peer_asn, peer_ip matches the routeserver local asn and ip
-                        if int(peers['peer_asn']) == int(azure_route_server_local_bgp_config['routeserver_asn']) and \
-                            str(peers['peer_ip']) in azure_route_server_local_bgp_config['routeserver_ips']:
-                                logging.info("Network:{0} configured correctly and no new connections to configure".format([meraki_peers['network_name']]))
-                                
-        # might have to un indent this one more time could be causing double puts to azure
         else:
 
+            bgp_neighbors = []
+        
+        # creating master dictionary with relevant information to append to list_of_meraki_vmx_bgp_config
+        # so that the Azure config can be updated with the appropriate BGP configuration
+        vmx_bgp_dict_info = {
+            'network_name': networks[0],
+            'network_id': networks[1],
+            'uplink_ip': vmx_lan_ip[0],
+            # using list comprehension to pick out the specific tag within the list of tags that matches
+            # the configured route server in Azure, with networks[2] being the list of tags
+            'network_tags': [x for x in networks[2] if tag_prefix in x], 
+            'bgp_enabled': network_bgp_info['enabled'], # this will have to be a check or something we get rid of
+            'bgp_asn': network_bgp_info['asNumber'],
+            'bgp_neighbors': bgp_neighbors
+        }
 
-            # if not update the routeserver config for the meraki peer 
-            update_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, meraki_peers['network_name'], meraki_peers['uplink_ip'], meraki_peers['bgp_asn'], AZURE_TOKEN)
-            logging.info("Updated route_server config for peer {0}".format(meraki_peers['network_name']))
+        # appending the vmx_bgp_dict_info dictionary to the list list_of_meraki_vmx_bgp_config to 
+        # make a list of dictionaries to be referenced when updating the Azure config
+        list_of_meraki_vmx_bgp_config.append(vmx_bgp_dict_info)
+
+
+    azure_route_server_bgp_connection_info = get_route_server_bgp_connections(RESOURCE_GROUP, \
+        ROUTE_SERVER_NAME, AZURE_TOKEN)
+
+    # now we need to compare the two dictionaries for Azure and Meraki (list_of_meraki_vmx_bgp_config and azure_route_server_bgp_connection_info['value'])
+    azure_route_server_local_bgp_config = get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN)
+
+    #iterating through meraki bgp config
+    for meraki_peers in list_of_meraki_vmx_bgp_config:
+
+        # iterate over azure bgp connections
+        for azure_peers in azure_route_server_bgp_connection_info['value']: 
+
+            logging.info(meraki_peers)
+            
+
+            # Check if meraki uplink matches the azure routeserver peer ip, peer_asn and provisioning state
+            if meraki_peers['uplink_ip'] == azure_peers['properties']['peerIp'] and \
+                meraki_peers['bgp_asn'] == azure_peers['properties']['peerAsn'] and \
+                    azure_peers['properties']['provisioningState'] == 'Succeeded':
+
+                        # iterate over the meraki dict for bgp peers
+                        for peers in meraki_peers['bgp_neighbors']:
+
+                            # Match if meraki peer_asn, peer_ip matches the routeserver local asn and ip
+                            if int(peers['peer_asn']) == int(azure_route_server_local_bgp_config['routeserver_asn']) and \
+                                str(peers['peer_ip']) in azure_route_server_local_bgp_config['routeserver_ips']:
+                                    logging.info("Network:{0} configured correctly and no new connections to configure".format([meraki_peers['network_name']]))
+                                    
+            # might have to un indent this one more time could be causing double puts to azure
+            else:
+
+
+                # if not update the routeserver config for the meraki peer 
+                update_route_server_bgp_connections(RESOURCE_GROUP, ROUTE_SERVER_NAME, meraki_peers['network_name'], meraki_peers['uplink_ip'], meraki_peers['bgp_asn'], AZURE_TOKEN)
+                logging.info("Updated route_server config for peer {0}".format(meraki_peers['network_name']))

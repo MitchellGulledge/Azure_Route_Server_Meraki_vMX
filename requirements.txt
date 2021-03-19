@@ -1,5 +1,5 @@
-requests 
-json 
+requests==2.25.1
+json
 time
-meraki
+meraki==1.6.2
 logging

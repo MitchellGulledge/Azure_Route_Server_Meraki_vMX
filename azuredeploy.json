@@ -110,7 +110,7 @@
     "variables": {
         "hostingPlanName": "[parameters('function_app_name')]",
         "storageAccountName": "[concat('storage', uniquestring(resourceGroup().id))]",
-        "functionPackage": "https://github.com/MitchellGulledge/UmbrakiServerless/raw/main/UmbrakiServerless.zip"
+        "functionPackage": "https://github.com/MitchellGulledge/Azure_Route_Server_Meraki_vMX/raw/main/Azure_Route_Server_Meraki_vMX.zip"
     },
     "resources": [
         {

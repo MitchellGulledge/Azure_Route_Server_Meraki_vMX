@@ -165,7 +165,7 @@ Step 1) Obtain Cisco Meraki API Key and Org Name
 
 - To view your Organization name navigate to Organization > Settings and the following can be seen:
 
-(insert org over - settings image)
+![Test Image 1](Org_settings.png)
 
 - For access to the API, first enable the API for your organization. 
 

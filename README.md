@@ -158,6 +158,86 @@ https://developer.cisco.com/meraki/api-v1/#!get-network-events
 # Automation
 
 Nobody likes manually entering remote peer IP and ASN information, whether it is via CLI or GUI. Hence we offer automation option powered by an Azure Function. Below are the steps needed in order to utilize the Meraki BGP Peering automation toolkit. 
+
+Step 1) Obtain Cisco Meraki API Key and Org Name
+
+- The API Key and Org Name will be needed for the script to configure your Meraki device. 
+
+- To view your Organization name navigate to Organization > Settings and the following can be seen:
+
+(insert org over - settings image)
+
+- For access to the API, first enable the API for your organization. 
+
+- Navigate to Organization > Settings > Dashboard API access 
+
+- Enable the API 
+
+(insert api key button)
+
+
+Run the deployment script to create the Azure Function app: 
+
+For automation, Azure Functions are used to run a Python script every 5 minutes to sync the configuration between the Cisco Meraki and Azure Route Server configurations.  An Azure Resource Manager (ARM) Template is used to help facilitate the deployment process and creation of the Azure Function, Azure Route Server, and related peering configurations. 
+
+- To deploy the Azure Function, click on the deploy to Azure button below:
+
+(list azure button here)
+
+Next, click the Deploy to Azure button. 
+
+- When logged in to the Azure Portal, fill out the required parameters and click Review + Create. 
+
+Note: The Function App Name should not contain any special characters other than “-“.  The function app also needs to be unique globally within Azure, so please use a name that is unique to your organization. 
+
+Tip: More information on each of the required parameters can be found by hovering over the  icon in the Azure Portal. 
+
+Example Configuration 
+
+(insert screenshot of example azure config)
+
+- Click Create on the Summary blade.  
+
+Delegate access to the function app in the Azure Portal: 
+
+Once the template has finished deploying, the Azure Function will not have any access to your Virtual WAN resources once provisioned.  To delegate access to Azure Route Server, please complete the following steps. 
+
+- Sign in to the Azure portal with your Azure account. 
+
+- Navigate to your Resource Group that contains your Virtual WAN and Storage Account resources. 
+
+- Select Access control (IAM), + Add, and select Add Role Assignment. 
+
+- Click the Assign access to dropdown and select Function App 
+
+- Specify the following: 
+
+- Role: Network Contributor 
+
+- Select: Name of your Function App
+
+- Select the service principal 
+
+- Click Save 
+
+(insert screenshot of role assignment)
+
+Cisco Meraki Workflow
+
+Initially, there will be no tagged Meraki networks so the script will sleep and perform the same GET to obtain any networks with the relevant tag. In order to deploy a new branch, the user would navigate to Organization > Overview and select the checkbox next to the network that you wish to connect. Below is a snippet of the Meraki Dashboard Overview page:  
+
+(insert screenshot of org overview page)
+
+Once the network is tagged appropriately, BGP peering is then automatically configured between ARS and the vMX. 
+
+Tag naming convention
+
+In order for the function to properly detect new NVAs to be BGP peered to Azure Route Server the following syntax must be applied:
+
+```
+Tag template = ARS-unique identifier (letter/number)
+Actual tag value = ARS-routeserver-1
+```
 `
 # References
 

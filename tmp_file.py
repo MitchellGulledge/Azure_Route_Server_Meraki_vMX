@@ -2,6 +2,8 @@ import requests
 import json 
 import time
 import meraki
+import logging
+import os
 
 from pprint import pprint as pp
 
@@ -34,6 +36,31 @@ for org in result_org_id:
     if org['name'] == org_name:
         org_id = org['id']
 
+
+def get_bearer_token(resource_uri):
+    access_token = None
+    try:
+        identity_endpoint = os.environ['IDENTITY_ENDPOINT']
+        identity_header = os.environ['IDENTITY_HEADER']
+    except:
+        logging.error("Could not obtain authentication token for Azure. Please ensure "
+                      "System Assigned identities have been enabled on the Azure Function.")
+        return None
+
+    token_auth_uri = f"{identity_endpoint}?resource={resource_uri}&api-version=2017-09-01"
+    head_msi = {'secret': identity_header}
+    try:
+        resp = requests.get(token_auth_uri, headers=head_msi)
+        access_token = resp.json()['access_token']
+    except Exception as e:
+        logging.error("Could not obtain access token to manage other Azure resources.")
+        logging.error(e)
+
+    return access_token
+
+
+access_token = get_bearer_token(AZURE_MGMT_URL)
+AZURE_TOKEN = {'Authorization': f'Bearer {access_token}'}
 
 def get_microsoft_network_base_url(AZURE_MGMT_URL, SUBSCRIPTION_ID, rg_name=None, provider="Microsoft.Network"):
     if rg_name:

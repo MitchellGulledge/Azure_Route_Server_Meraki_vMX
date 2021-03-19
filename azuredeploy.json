@@ -1,0 +1,242 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "function_app_name": {
+            "type": "string",
+            "defaultValue": "",
+            "minLength": 2,
+            "maxLength": 60,
+            "metadata": {
+                "description": "Specify the name of the function application (no special characters allowed)"
+            }
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_RAGRS"
+            ],
+            "metadata": {
+                "description": "Storage Account type"
+            }
+        },
+        "function_location": {
+            "type": "string",
+            "allowedValues": [
+                "Australia East",
+                "Brazil South",
+                "Central US",
+                "East Asia",
+                "East US",
+                "East US 2",
+                "France Central",
+                "Korea Central",
+                "North Europe",
+                "South Central US",
+                "Southeast Asia",
+                "UK South",
+                "UK West",
+                "West Europe",
+                "West US",
+                "West US 2"                
+            ],
+            "metadata": {
+                "description": "Specify the region for the Azure Function to be deployed to."
+            }
+        },
+        "app_insights_location": {
+            "type": "string",
+            "allowedValues": [
+                "Canada Central",
+                "East US",
+                "East US 2",
+                "North Central US",
+                "South Central US",
+                "West US",
+                "West US 2",
+                "North Europe",
+                "West Europe",
+                "France Central",
+                "Central India",
+                "Japan East",
+                "Korea Central",
+                "Switzerland North",
+                "South Africa North",
+                "UK South"
+            ],
+            "metadata": {
+                "description": "Specify the region for Application Insights data, which can be used for debugging."
+            }
+        },
+        "meraki_api_key": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "API Key to Meraki (can be found via the my profile page)"
+            }
+        },
+        "meraki_org_name": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Meraki organization name"
+            }
+        },
+        "tag_prefix": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Beginning of Meraki Dashboard network tag"
+            }
+        },
+        "umbrella_org_id": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Beginning of Meraki Dashboard network tag"
+            }
+        },
+        "umbrella_secret": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Beginning of Meraki Dashboard network tag"
+            }
+        },
+        "umbrella_key": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "umbrella API key"
+            }
+        }
+    },
+    "variables": {
+        "hostingPlanName": "[parameters('function_app_name')]",
+        "storageAccountName": "[concat('storage', uniquestring(resourceGroup().id))]",
+        "functionPackage": "https://github.com/MitchellGulledge/UmbrakiServerless/raw/main/UmbrakiServerless.zip"
+    },
+    "resources": [
+        {
+            "name": "[parameters('function_app_name')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[parameters('function_location')]",
+            "kind": "functionapp,linux",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('microsoft.insights/components/', parameters('function_app_name'))]"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[reference(resourceId('microsoft.insights/components/', parameters('function_app_name')), '2018-05-01-preview').InstrumentationKey]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2017-06-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "python"
+                        },
+                        {
+                            "name": "WEBSITE_RUN_FROM_PACKAGE",
+                            "value": "[variables('functionPackage')]"
+                        },
+                        {
+                            "name": "meraki_api_key",
+                            "value": "[parameters('meraki_api_key')]"
+                        },
+                        {
+                            "name": "meraki_org_name",
+                            "value": "[parameters('meraki_org_name')]"
+                        },
+                        {
+                            "name": "subscription_id",
+                            "value": "[subscription().subscriptionId]"
+                        },
+                        {
+                            "name": "tag_prefix",
+                            "value": "[parameters('tag_prefix')]"
+                        },
+                        {
+                            "name": "umbrella_org_id",
+                            "value": "[parameters('umbrella_org_id')]"
+                        },
+                        {
+                            "name": "umbrella_key",
+                            "value": "[parameters('umbrella_key')]"
+                        },
+                        {
+                            "name": "umbrella_secret",
+                            "value": "[parameters('umbrella_secret')]"
+                        }
+                    ],
+                    "LinuxFxVersion": "PYTHON|3.8"
+                },
+                "name": "[parameters('function_app_name')]",
+                "clientAffinityEnabled": false,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+            }
+        },
+        {
+            "apiVersion": "2018-11-01",
+            "name": "[variables('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('function_location')]",
+            "kind": "linux",
+            "tags": null,
+            "dependsOn": [],
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerSize": 0,
+                "workerSizeId": 0,
+                "numberOfWorkers": 1,
+                "reserved": true
+            },
+            "sku": {
+                "Tier": "Dynamic",
+                "Name": "Y1",
+                "family": "Y",
+                "capacity": 0
+            }
+        },
+        {
+            "apiVersion": "2019-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "apiVersion": "2018-05-01-preview",
+            "name": "[parameters('function_app_name')]",
+            "type": "Microsoft.Insights/components",
+            "location": "[parameters('app_insights_location')]",
+            "properties": {
+                "ApplicationId": "[parameters('function_app_name')]"
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

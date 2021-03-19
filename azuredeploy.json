@@ -159,7 +159,7 @@
                             "value": "[parameters('meraki_org_name')]"
                         },
                         {
-                            "name": "SUBSCRIPTION_ID",
+                            "name": "subscription_id",
                             "value": "[subscription().subscriptionId]"
                         },
                         {
@@ -167,12 +167,12 @@
                             "value": "[parameters('tag_prefix')]"
                         },
                         {
-                            "name": "ROUTE_SERVER_NAME",
-                            "value": "[parameters('ROUTE_SERVER_NAME')]"
+                            "name": "route_server_name",
+                            "value": "[parameters('route_server_name')]"
                         },
                         {
-                            "name": "RESOURCE_GROUP",
-                            "value": "[parameters('RESOURCE_GROUP')]"
+                            "name": "resource_group",
+                            "value": "[parameters('resource_group')]"
                         }
                     ],
                     "LinuxFxVersion": "PYTHON|3.8"

@@ -10,19 +10,19 @@ import os
 # Azure authentication credentials are listed below
 AZURE_MGMT_URL = "https://management.azure.com"
 BLOB_HOST_URL = "blob.core.windows.net"
-SUBSCRIPTION_ID = ""
-RESOURCE_GROUP = ""
-ROUTE_SERVER_NAME =""
+SUBSCRIPTION_ID = os.environ['subscription_id']
+RESOURCE_GROUP = os.environ['resource_group']
+ROUTE_SERVER_NAME = os.environ['route_server_name']
 AZURE_TOKEN = {"Authorization": "Bearer "} 
 
 
 
 # Defining your API key as a variable in source code is not recommended
-API_KEY = ''
+API_KEY = os.environ['meraki_api_key'].lower()
 # Instead, use an environment variable as shown under the Usage section
 # @ https://github.com/meraki/dashboard-api-python/
 # creating variable for org name to later map the org ID
-org_name = ''
+org_name = os.environ['meraki_org_name']
 # creating tag prefix variable in order for the meraki dashboard to indicate to the Azure Function 
 # that is needs to establish a peering session between the NVA and the route server
 tag_prefix = 'ARS-'

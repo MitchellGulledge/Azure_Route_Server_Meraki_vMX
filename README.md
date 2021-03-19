@@ -238,6 +238,20 @@ In order for the function to properly detect new NVAs to be BGP peered to Azure 
 Tag template = ARS-unique identifier (letter/number)
 Actual tag value = ARS-routeserver-1
 ```
+
+- FAQ
+
+Q: How do I ensure the automation remains working if I generate a new Meraki API Key? 
+
+A: You can navigate to the Azure Function in the Azure Portal and select Configuration under Settings.  Under Application settings, modify the value for the setting called meraki_api_key. 
+
+ 
+
+Q: The automation doesn’t seem to be doing anything, how do I figure out what’s going on? 
+
+A: The Azure Function will log many points of execution to help facilitate troubleshooting.  Navigate to your Function App, select Functions, choose Meraki-VWAN-Automation, and click Monitor.  On the Monitor blade, you can select any of the run dates and see the logging information as the code executes.  In many cases, a Type of Error will be logged at points where the script reaches out to make API calls. 
+
+Note: Logs may take up to 5 minutes display after the script has executed. 
 `
 # References
 

@@ -98,6 +98,10 @@ def get_tagged_networks():
 def get_tagged_networks_bgp_data(network_id):
     route_server_config = get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERVER_NAME, AZURE_TOKEN)
     route_server_ips_to_add = []
+    enabled = True
+ 
+    for ips in route_server_config['routeserver_ips']:
+        route_server_ips_to_add.append(ips)  
     
     # executing API call to obtain BGP configuration for specified network ID
     network_bgp_config = meraki_dashboard_sdk_auth.appliance.getNetworkApplianceVpnBgp(
@@ -106,23 +110,34 @@ def get_tagged_networks_bgp_data(network_id):
     # conditional statement to ensure BGP is enabled for the tagged network, if not we will
     # update the BGP config for the network ID that we already put to function and return the config
     if network_bgp_config['enabled'] == False:
-        enabled = True
         # enabling BGP config for network
         enable_bgp_response = meraki_dashboard_sdk_auth.appliance.updateNetworkApplianceVpnBgp(
             network_id, enabled, 
             ibgpHoldTimer=180
         )
-        for ips in route_server_config['routeserver_ips']:
-            route_server_ips_to_add.append(ips)
-        # executing API call to obtain BGP configuration for specified network ID
-        #for neighbors in network_bgp_config['neighbors']['ip']:
-        #    if neighbors['ip'] != ips:
+        update_bgp_config = meraki_dashboard_sdk_auth.appliance.updateNetworkApplianceVpnBgp(
+                    network_id, enabled, 
+                    ibgpHoldTimer=180,
+                    neighbors=[{'ip': route_server_ips_to_add[0], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}, \
+                            {'ip': route_server_ips_to_add[1], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}]
+                )
 
+    elif network_bgp_config['enabled'] == True and 'neighbors' in network_bgp_config:
+        for ip in route_server_config['routeserver_ips']:
+            if ip not in network_bgp_config['neighbors'][0]['ip']:
+                update_bgp_config = meraki_dashboard_sdk_auth.appliance.updateNetworkApplianceVpnBgp(
+                        network_id, enabled, 
+                        ibgpHoldTimer=180,
+                        neighbors=[{'ip': route_server_ips_to_add[0], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}, \
+                                {'ip': route_server_ips_to_add[1], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}]
+                    )
+
+    elif network_bgp_config['enabled'] == True and 'neighbors' not in network_bgp_config:
         update_bgp_config = meraki_dashboard_sdk_auth.appliance.updateNetworkApplianceVpnBgp(
                 network_id, enabled, 
                 ibgpHoldTimer=180,
                 neighbors=[{'ip': route_server_ips_to_add[0], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}, \
-                    {'ip': route_server_ips_to_add[1], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}]
+                           {'ip': route_server_ips_to_add[1], 'remoteAsNumber': route_server_config['routeserver_asn'], 'receiveLimit': 150, 'allowTransit': True, 'ebgpHoldTimer': 180, 'ebgpMultihop': 2}]
             )
 
     # performing get request to Meraki API to obtain the local subnets inside the VPN. 

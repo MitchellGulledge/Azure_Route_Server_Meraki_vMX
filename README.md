@@ -18,6 +18,12 @@ Authors: Simarbir Singh, Mitchell Gulledge
 
 This document encompasses a detailed step by step guide on deploying the Azure Route Server (Currently in Preview) and Cisco Meraki vMXs hosted in the Azure cloud. BGP is utilized to provide resiliency, symmetry and load sharing across vMXs in the Azure cloud.
 
+# Why Azure Route Server
+
+Traditionally, for customers to achieve high availability for Network Virtual Appliances (NVAs) in Azure, an Azure function was utilized to probe the virtual machine connectivity. Based on whether or not a response was seen on the primary VM, the function would rewrite the User Defined Routes in the Azure routing table. This solution technically works, although creates it's own challenges with scalability, manageability and delay. 
+
+Additionally, when adding new sites or even new subnets to existing sites you no longer need to manually update the User Defined Routes in the Azure routing table. Because we are now utilizing BGP to exchange reachability while offering redundancy, symmetry (via AS Path manipulation) and loadsharing across multiple NVAs.
+
 # Solution Architecture
 ![Test Image 1](RouteServerTopology.png)
 

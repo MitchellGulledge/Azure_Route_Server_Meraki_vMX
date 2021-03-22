@@ -164,7 +164,7 @@ https://developer.cisco.com/meraki/api-v1/#!get-network-events
 For troubleshooting vMX specific issues not related to dynamic routing please refer to the troubleshooting section in the Azure vMX Deployment Guide linked below:
 https://documentation.meraki.com/MX/MX_Installation_Guides/vMX_Setup_Guide_for_Microsoft_Azure#Troubleshooting
 
-# Automation (Work In Progress)
+# Automation 
 
 Nobody likes manually entering remote peer IP and ASN information, whether it is via CLI or GUI. Hence we offer automation option powered by an Azure Function. Below are the steps needed in order to utilize the Meraki BGP Peering automation toolkit. 
 

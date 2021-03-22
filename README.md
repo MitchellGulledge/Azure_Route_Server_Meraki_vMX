@@ -4,6 +4,7 @@ Authors: Simarbir Singh, Mitchell Gulledge
 
 - [Azure Route Server and Cisco Meraki vMX Deployment Guide (Preview not production ready)](#azure-route-server-and-cisco-meraki-vmx-deployment-guide-preview-not-production-ready)
 - [Solution Overview](#solution-overview)
+- [Why Azure Route Server](#why-azure-route-server)
 - [Solution Architecture](#solution-architecture)
 - [Step 1) Deploy Cisco Meraki Network Virtual Appliances (vMXs) from Azure Marketplace](#step-1-deploy-cisco-meraki-network-virtual-appliances-vmxs-from-azure-marketplace)
 - [Step 2) Prep Azure  Route Server Environment (CLI Reference)](#step-2-prep-azure--route-server-environment-cli-reference)

@@ -29,7 +29,7 @@ Additionally, when adding new sites or even new subnets to existing sites you no
 # Solution Architecture
 ![Test Image 1](RouteServerTopology.png)
 
-In the above diagram, the branch MX connects to a pair of vMXs deployed in the same VNET across different Availability Zones for redundancy. EBGP has been configured across the vMXs to the route server virtualRouterIps that will be discussed further later. IBGP is formed on top of Auto VPN directly from the Branch to the respective vMXs in the Azure cloud. AS Path manipulation is used to ensure symmetry for the route to Azure and the route back from Azure, this is done in accordance with the concentrator priority that is configured at the branch MX site to site vpn settings. 
+In the above diagram, the branch MX connects to a pair of vMXs deployed in the same VNET across different Availability Zones for redundancy. EBGP has been configured across the vMXs to the route server `virtualRouterIps` that will be discussed further later. IBGP is formed on top of Auto VPN directly from the Branch to the respective vMXs in the Azure cloud. AS Path manipulation is used to ensure symmetry for the route to Azure and the route back from Azure, this is done in accordance with the concentrator priority that is configured at the branch MX site to site vpn settings. 
 
 # Deployment Steps
 ## Step 1) Deploy Cisco Meraki Network Virtual Appliances (vMXs) from Azure Marketplace
@@ -75,8 +75,9 @@ az network vnet subnet show -n “RouteServerSubnet” --vnet-name “myVirtualN
 Now that the Azure Resource Group, VNET, Subnets etc have all been created, the next step is to configure the route server. Below is the CLI command for creating the server:
 
 ```
-az network routeserver create -n “myRouteServer” -g “RouteServerRG” --hosted-subnet $subnet_id  
+az network routeserver create -n “myRouteServer” -g “RouteServerRG” --hosted-subnet $subnet_id
 ```
+In the above CLI command, `-n` refers to the name of the routeserver and `-g` is the resource group name. 
 
 From Azure: "The location needs to match the location of your virtual network. The HostedSubnet is the RouteServerSubnet ID you obtained in the previous section."
 
@@ -127,7 +128,7 @@ The output from the above should look like:
 }
 ```
 
-Noting in the above you will want to grab the virtualRouterAsn and virtualRouterIps for the Meraki BGP config. 
+Noting in the above you will want to grab the `virtualRouterAsn` and `virtualRouterIps` for the Meraki BGP config. 
 
 Once these values have been obtained, you will navigate to your virtual appliance in the Meraki Dashboard and navigate to the site to site vpn page, enable Auto VPN by selecting Hub and then scrolling down to the BGP settings. 
 
@@ -145,8 +146,8 @@ Once, we have the BGP configured on the vMX, the next step would be to configure
 ```
 az network routeserver peering create --routeserver-name “myRouteServer” -g “RouteServerRG” --peer-ip “vmx_pip” --peer-asn “vmx1_asn” -n “vmx1_name”
 ```
-- vmx_pip is going to be the private ip of your vMX instance
-- vmx_asn is the ASN that was configured for the vMX in the above step
+- `vmx_pip` is going to be the private ip of your vMX instance
+- `vmx_asn` is the ASN that was configured for the vMX in the above step
 
 # Troubleshooting
 
@@ -171,7 +172,9 @@ https://documentation.meraki.com/MX/MX_Installation_Guides/vMX_Setup_Guide_for_M
 
 Nobody likes manually entering remote peer IP and ASN information, whether it is via CLI or GUI. Hence we offer automation option powered by an Azure Function. Below are the steps needed in order to utilize the Meraki BGP Peering automation toolkit. 
 
-Step 1) Obtain Cisco Meraki API Key and Org Name
+#### Obtain Cisco Meraki API Key and Org Name ####
+
+Obtain Cisco Meraki API Key and Org Name
 
 - The API Key and Org Name will be needed for the script to configure your Meraki device. 
 
@@ -193,7 +196,7 @@ Note: The API key is associated with a Dashboard administrator account.  
 
 ![Test Image 1](generate_meraki_api_key.png)
 
-Run the deployment script to create the Azure Function app: 
+#### Run the deployment script to create the Azure Function app: ####
 
 For automation, Azure Functions are used to run a Python script every 5 minutes to sync the configuration between the Cisco Meraki and Azure Route Server configurations.  An Azure Resource Manager (ARM) Template is used to help facilitate the deployment process and creation of the Azure Function, Azure Route Server, and related peering configurations. 
 

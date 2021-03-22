@@ -1,4 +1,4 @@
-# Azure Route Server and Cisco Meraki vMX Deployment Guide (Preview not production ready)
+# Azure Route Server and Cisco Meraki vMX Deployment Guide (Public Preview - Try It Out)
 
 Authors: Simarbir Singh, Mitchell Gulledge
 

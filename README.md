@@ -262,7 +262,9 @@ Q: The automation doesnâ€™t seem to be doing anything, how do I figure out whatâ
 
 A: The Azure Function will log many points of execution to help facilitate troubleshooting.  Navigate to your Function App, select Functions, choose your function app, and click Monitor.  On the Monitor blade, you can select any of the run dates and see the logging information as the code executes.  In many cases, a Type of Error will be logged at points where the script reaches out to make API calls. 
 
-Note: Logs may take up to 5 minutes display after the script has executed. 
+Note: Logs may take up to 5 minutes display after the script has executed. Below is a screenshot of the monitor tab once you clicked into the function:
+
+![Test Image 1](Az_func_monitor.png)
 `
 # References
 

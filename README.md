@@ -235,7 +235,7 @@ Once the template has finished deploying, the Azure Function will not have any a
 
 - Click Save 
 
-(insert screenshot of role assignment)
+![Test Image 1](role_assignment.png)
 
 #### Cisco Meraki Workflow ####
 

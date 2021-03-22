@@ -209,7 +209,7 @@ Tip: More information on each of the required parameters can be found by hoverin
 
 Example Configuration 
 
-(insert screenshot of example azure config)
+![Test Image 1](Func_app_config.png)
 
 - Click Create on the Summary blade.  
 

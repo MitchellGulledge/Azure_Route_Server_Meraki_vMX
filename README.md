@@ -6,11 +6,12 @@ Authors: Simarbir Singh, Mitchell Gulledge
 - [Solution Overview](#solution-overview)
 - [Why Azure Route Server](#why-azure-route-server)
 - [Solution Architecture](#solution-architecture)
-- [Step 1) Deploy Cisco Meraki Network Virtual Appliances (vMXs) from Azure Marketplace](#step-1-deploy-cisco-meraki-network-virtual-appliances-vmxs-from-azure-marketplace)
-- [Step 2) Prep Azure  Route Server Environment (CLI Reference)](#step-2-prep-azure--route-server-environment-cli-reference)
-- [Step 3) Deploy Azure Route Server (CLI Reference)](#step-3-deploy-azure-route-server-cli-reference)
-- [Step 4) Configure BGP on the Cisco Meraki vMX](#step-4-configure-bgp-on-the-cisco-meraki-vmx)
-- [Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)](#step-5-configure-bgp-peering-on-the-azure-route-server-cli-reference)
+- [Deployment Steps](#deployment-steps)
+  - [Step 1) Deploy Cisco Meraki Network Virtual Appliances (vMXs) from Azure Marketplace](#step-1-deploy-cisco-meraki-network-virtual-appliances-vmxs-from-azure-marketplace)
+  - [Step 2) Prep Azure  Route Server Environment (CLI Reference)](#step-2-prep-azure--route-server-environment-cli-reference)
+  - [Step 3) Deploy Azure Route Server (CLI Reference)](#step-3-deploy-azure-route-server-cli-reference)
+  - [Step 4) Configure BGP on the Cisco Meraki vMX](#step-4-configure-bgp-on-the-cisco-meraki-vmx)
+  - [Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)](#step-5-configure-bgp-peering-on-the-azure-route-server-cli-reference)
 - [Troubleshooting](#troubleshooting)
 - [Automation](#automation)
 - [References](#references)
@@ -30,12 +31,13 @@ Additionally, when adding new sites or even new subnets to existing sites you no
 
 In the above diagram, the branch MX connects to a pair of vMXs deployed in the same VNET across different Availability Zones for redundancy. EBGP has been configured across the vMXs to the route server virtualRouterIps that will be discussed further later. IBGP is formed on top of Auto VPN directly from the Branch to the respective vMXs in the Azure cloud. AS Path manipulation is used to ensure symmetry for the route to Azure and the route back from Azure, this is done in accordance with the concentrator priority that is configured at the branch MX site to site vpn settings. 
 
-# Step 1) Deploy Cisco Meraki Network Virtual Appliances (vMXs) from Azure Marketplace
+# Deployment Steps
+## Step 1) Deploy Cisco Meraki Network Virtual Appliances (vMXs) from Azure Marketplace
 
 The steps for deploying virtual MXs from the Azure marketplace are out of scope for this document. For more information on deploying virtual MXs from the Azure marketplace please reference the following link:
 https://documentation.meraki.com/MX/MX_Installation_Guides/vMX_Setup_Guide_for_Microsoft_Azure
 
-# Step 2) Prep Azure  Route Server Environment (CLI Reference)
+## Step 2) Prep Azure  Route Server Environment (CLI Reference)
 
 For additional ways to automate or configure through the Azure portal please refer to the Azure Route Server Documentation here:
 https://docs.microsoft.com/en-us/azure/route-server/overview
@@ -68,7 +70,7 @@ az network vnet subnet create -g “RouteServerRG” --vnet-name “myVirtualNet
 az network vnet subnet show -n “RouteServerSubnet” --vnet-name “myVirtualNetwork” -g “RouteServerRG” --query id -o tsv
 ```
 
-# Step 3) Deploy Azure Route Server (CLI Reference)
+## Step 3) Deploy Azure Route Server (CLI Reference)
 
 Now that the Azure Resource Group, VNET, Subnets etc have all been created, the next step is to configure the route server. Below is the CLI command for creating the server:
 
@@ -78,7 +80,7 @@ az network routeserver create -n “myRouteServer” -g “RouteServerRG” --ho
 
 From Azure: "The location needs to match the location of your virtual network. The HostedSubnet is the RouteServerSubnet ID you obtained in the previous section."
 
-# Step 4) Configure BGP on the Cisco Meraki vMX
+## Step 4) Configure BGP on the Cisco Meraki vMX
 
 The next step is for us to enable Auto VPN (set the vMX to be an Auto VPN Hub on the site to site VPN page) and configure the BGP settings on the Azure vMXs. 
 
@@ -137,7 +139,7 @@ In addition to configuring the BGP settings you will need to add the EBGP peer I
 
 ![Test Image 1](local_networks.png)
 
-# Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)
+## Step 5) Configure BGP Peering on the Azure Route Server (CLI Reference)
 
 Once, we have the BGP configured on the vMX, the next step would be to configure the route server to peer with the vMX. The following command can be used to establish the peering between the route server and the vMX. 
 ```

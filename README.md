@@ -149,25 +149,6 @@ az network routeserver peering create --routeserver-name “myRouteServer” -g 
 - `vmx_pip` is going to be the private ip of your vMX instance
 - `vmx_asn` is the ASN that was configured for the vMX in the above step
 
-# Troubleshooting
-
-When BGP peering between the Cisco Meraki NVA and the route server is flapping, it is typically due to the hold timer settings on the Meraki dashboard. By default, the Keep-alive timer on Azure Route Server is set to 60 seconds and the Hold-down timer is 180 seconds. (as seen in referenced BGP config)
-
-The session between the NVA and the Azure route server must be an EBGP session. This is due to the fact that the Meraki branches and the vMX in Azure have an IBGP relationship. So in order for the branch to receive the Azure subnets the vMX must be configured in a different ASN than the Azure route server. 
-
-The Cisco Meraki Events Log is a powerful tool for troubleshooting any BGP issues. For flapping BGP sessions the Meraki event log will display when BGP sessions establish and log the BGP Notification messages that were sent and received. This is useful for troubleshooting flapping routes/sessions. Below is a screenshot that shows some sample BGP logs in the Meraki Dashboard:
-
-![Test Image 1](BGP_Event_log.png)
-
-The Notification messages displayed above show the RFC error and sub error codes for why a session was brought down. Below is a link to the RFC:
-https://tools.ietf.org/html/rfc4486
-
-Additionally, these BGP logs can be pulled from the Meraki API for integrating with third party monitoring systems:
-https://developer.cisco.com/meraki/api-v1/#!get-network-events
-
-For troubleshooting vMX specific issues not related to dynamic routing please refer to the troubleshooting section in the Azure vMX Deployment Guide linked below:
-https://documentation.meraki.com/MX/MX_Installation_Guides/vMX_Setup_Guide_for_Microsoft_Azure#Troubleshooting
-
 # Automation 
 
 Nobody likes manually entering remote peer IP and ASN information, whether it is via CLI or GUI. Hence we offer automation option powered by an Azure Function. Below are the steps needed in order to utilize the Meraki BGP Peering automation toolkit. 
@@ -257,8 +238,27 @@ In order for the function to properly detect new NVAs to be BGP peered to Azure 
 Tag template = ARS-unique identifier (letter/number)
 Actual tag value = ARS-routeserver-1
 ```
+# Troubleshooting
 
-#### FAQ ####
+When BGP peering between the Cisco Meraki NVA and the route server is flapping, it is typically due to the hold timer settings on the Meraki dashboard. By default, the Keep-alive timer on Azure Route Server is set to 60 seconds and the Hold-down timer is 180 seconds. (as seen in referenced BGP config)
+
+The session between the NVA and the Azure route server must be an EBGP session. This is due to the fact that the Meraki branches and the vMX in Azure have an IBGP relationship. So in order for the branch to receive the Azure subnets the vMX must be configured in a different ASN than the Azure route server. 
+
+The Cisco Meraki Events Log is a powerful tool for troubleshooting any BGP issues. For flapping BGP sessions the Meraki event log will display when BGP sessions establish and log the BGP Notification messages that were sent and received. This is useful for troubleshooting flapping routes/sessions. Below is a screenshot that shows some sample BGP logs in the Meraki Dashboard:
+
+![Test Image 1](BGP_Event_log.png)
+
+The Notification messages displayed above show the RFC error and sub error codes for why a session was brought down. Below is a link to the RFC:
+https://tools.ietf.org/html/rfc4486
+
+Additionally, these BGP logs can be pulled from the Meraki API for integrating with third party monitoring systems:
+https://developer.cisco.com/meraki/api-v1/#!get-network-events
+
+For troubleshooting vMX specific issues not related to dynamic routing please refer to the troubleshooting section in the Azure vMX Deployment Guide linked below:
+https://documentation.meraki.com/MX/MX_Installation_Guides/vMX_Setup_Guide_for_Microsoft_Azure#Troubleshooting
+
+
+# Automation Related FAQs 
 
 Q: How do I ensure the automation remains working if I generate a new Meraki API Key? 
 

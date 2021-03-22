@@ -199,8 +199,6 @@ For automation, Azure Functions are used to run a Python script every 5 minutes 
 
 [![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMitchellGulledge%2FAzure_Route_Server_Meraki_vMX%2Fmain%2Fazuredeploy.json)
 
-Next, click the Deploy to Azure button. 
-
 - When logged in to the Azure Portal, fill out the required parameters and click Review + Create. 
 
 Note: The Function App Name should not contain any special characters other than “-“.  The function app also needs to be unique globally within Azure, so please use a name that is unique to your organization. 
@@ -215,11 +213,11 @@ Example Configuration
 
 #### Delegate access to the function app in the Azure Portal:  ####
 
-Once the template has finished deploying, the Azure Function will not have any access to your Virtual WAN resources once provisioned.  To delegate access to Azure Route Server, please complete the following steps. 
+Once the template has finished deploying, the Azure Function will not have any access to your Azure Route Server once provisioned.  To delegate access to Azure Route Server, please complete the following steps. 
 
 - Sign in to the Azure portal with your Azure account. 
 
-- Navigate to your Resource Group that contains your Virtual WAN and Storage Account resources. 
+- Navigate to your Resource Group that contains your Azure Route Server. 
 
 - Select Access control (IAM), + Add, and select Add Role Assignment. 
 

@@ -76,12 +76,11 @@ def get_route_server(AZURE_MGMT_URL, SUBSCRIPTION_ID, RESOURCE_GROUP, ROUTE_SERV
                                                    SUBSCRIPTION_ID, RESOURCE_GROUP) + f"/virtualHubs/{ROUTE_SERVER_NAME}?api-version=2020-07-01"
     route_server_list = requests.get(endpoint_url, headers=AZURE_TOKEN)
     route_server_info = route_server_list.json()
-    #print(route_server_info)
     routeserver_bgp_dict_info = {
         'routeserver_asn': route_server_info['properties']['virtualRouterAsn'],
         'routeserver_ips': route_server_info['properties']['virtualRouterIps']
     }
-    #pp(routeserver_bgp_dict_info)
+    logging.info("Routeserver bgp neighbor information {0}".format(routeserver_bgp_dict_info))
 
     return routeserver_bgp_dict_info
 
@@ -246,7 +245,7 @@ def main(MerakiTimer: func.TimerRequest) -> None:
     # using list comprehension to obtain all networks containing the tag_prefix variable under the 
     # tags key in the list of dictionaries
     tagged_networks = [x for x in org_networks if str(tag_prefix) in str(x['tags'])[1:-1]]
-    logging.info("Tagged Networks {0}".format(tagged_networks))
+    logging.info("List of tagged networks {0} in the org".format(tagged_networks))
 
     # creating list that will be list of dictionaries containing all the Meraki BGP information
     # including the Uplink IP, Local ASN and current configured BGP peers

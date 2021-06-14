@@ -59,15 +59,15 @@ az account list
 3) For the Azure Route Server, a VNET is need in order to host the service. Use the follow command to create a resource group and virtual network. (Use these if you do not already have a virtual network) Below snippets were taken directly from Azure documentation: https://docs.microsoft.com/en-us/azure/route-server/quickstart-configure-route-server-cli
 
 ```
-az group create -n “RouteServerRG” -l “westus” 
-az network vnet create -g “RouteServerRG” -n “myVirtualNetwork” --address-prefix “10.0.0.0/16” 
+az group create -n "RouteServerRG" -l "westus"
+az network vnet create -g "RouteServerRG" -n "myVirtualNetwork" --address-prefix "10.0.0.0/16"
 ```
 
 4) Next we must create a subnet inside the VNET to host the route server and obtain the subnet ID. Below are the commands to create the subnet followed by the command to obtain the subnet ID.
 
 ```
-az network vnet subnet create -g “RouteServerRG” --vnet-name “myVirtualNetwork” --name “RouteServerSubnet” --address-prefix “10.0.0.0/24”  
-az network vnet subnet show -n “RouteServerSubnet” --vnet-name “myVirtualNetwork” -g “RouteServerRG” --query id -o tsv
+az network vnet subnet create -g "RouteServerRG" --vnet-name "myVirtualNetwork" --name "RouteServerSubnet" --address-prefix "10.0.0.0/24"  
+az network vnet subnet show -n "RouteServerSubnet" --vnet-name "myVirtualNetwork" -g "RouteServerRG" --query id -o tsv
 ```
 
 ## Step 3) Deploy Azure Route Server (CLI Reference)
@@ -75,7 +75,7 @@ az network vnet subnet show -n “RouteServerSubnet” --vnet-name “myVirtualN
 Now that the Azure Resource Group, VNET, Subnets etc have all been created, the next step is to configure the route server. Below is the CLI command for creating the server:
 
 ```
-az network routeserver create -n “myRouteServer” -g “RouteServerRG” --hosted-subnet $subnet_id
+az network routeserver create -n "myRouteServer" -g "RouteServerRG" --hosted-subnet $subnet_id
 ```
 In the above CLI command, `-n` refers to the name of the routeserver and `-g` is the resource group name. 
 
@@ -88,7 +88,7 @@ The next step is for us to enable Auto VPN (set the vMX to be an Auto VPN Hub on
 Before we can configure the BGP settings on the Meraki dashboard we need to obtain the BGP peer settings for the route server (peer IPs and ASN). To do this we run the following command using the Azure CLI:
 
 ```
-az network routeserver show -g “RouteServerRG” -n “myRouteServer” 
+az network routeserver show -g "RouteServerRG" -n "myRouteServer" 
 ```
 
 The output from the above should look like:
@@ -128,7 +128,7 @@ The output from the above should look like:
 }
 ```
 
-Noting in the above you will want to grab the `virtualRouterAsn` and `virtualRouterIps` for the Meraki BGP config. 
+Noting in the above you will want to grab the 'virtualRouterAsn' and 'virtualRouterIps' for the Meraki BGP config. 
 
 Once these values have been obtained, you will navigate to your virtual appliance in the Meraki Dashboard and navigate to the site to site vpn page, enable Auto VPN by selecting Hub and then scrolling down to the BGP settings. 
 
@@ -144,10 +144,10 @@ In addition to configuring the BGP settings you will need to add the EBGP peer I
 
 Once, we have the BGP configured on the vMX, the next step would be to configure the route server to peer with the vMX. The following command can be used to establish the peering between the route server and the vMX. 
 ```
-az network routeserver peering create --routeserver-name “myRouteServer” -g “RouteServerRG” --peer-ip “vmx_pip” --peer-asn “vmx1_asn” -n “vmx1_name”
+az network routeserver peering create --routeserver-name "myRouteServer" -g "RouteServerRG" --peer-ip "vmx_pip" --peer-asn "vmx1_asn" -n "vmx1_name"
 ```
-- `vmx_pip` is going to be the private ip of your vMX instance
-- `vmx_asn` is the ASN that was configured for the vMX in the above step
+- 'vmx_pip' is going to be the private ip of your vMX instance
+- 'vmx_asn' is the ASN that was configured for the vMX in the above step
 
 # Automation 
 
